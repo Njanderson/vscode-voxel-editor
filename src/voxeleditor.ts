@@ -1,36 +1,52 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 export class VoxelEditor {
 
     private _webView : vscode.WebviewPanel;
+    private _extContext : vscode.ExtensionContext;
 
-    constructor() {
+    constructor(context: vscode.ExtensionContext) {
+        this._extContext = context;
+
         this._webView = vscode.window.createWebviewPanel(
             'voxelEditor',
             "Voxel Editor",
             vscode.ViewColumn.One,
-            {}
+            {
+                enableScripts: true
+            }
         );
 
         // Handle messages from the webview
         this._webView.webview.onDidReceiveMessage(message => {
             switch (message.command) {
-                case 'alert':
-                    vscode.window.showErrorMessage(message.text);
+                case 'echo':
+                    vscode.window.showInformationMessage('Echo: ' + message.toString());
                     return;
             }
-        }, undefined, context.subscriptions);
+        },
+        undefined,
+        /* TODO: Should this be undefined?*/
+        undefined);
+
+        // Construct the first Webview contents
+        this._renderVoxel();
     }
 
     public getWebView() : vscode.WebviewPanel {
         return this._webView;
     }
 
-    public renderVoxel() {
+    public postMessage(message : object) : void {
+        this._webView.webview.postMessage(message);
+    }
+
+    private _renderVoxel() {
         // Get the current text editor
-        let editor = window.activeTextEditor;
+        let editor = vscode.window.activeTextEditor;
         if (!editor) {
-            this._statusBarItem.hide();
+            // TODO: What's behavior if we have no active text editor?
             return;
         }
 
@@ -43,7 +59,6 @@ export class VoxelEditor {
         // TODO: Add JSON schema validation
         // TODO: Parse this into a structured class
         let voxelScene = JSON.parse(docContent);
-
         this._webView.webview.html = this._createHtml(voxelScene);
     }
 
@@ -52,7 +67,14 @@ export class VoxelEditor {
         this._webView.title = voxelScene.scene;
         console.log('Creating html for ' + voxelScene.scene);
 
-        let html : string = this._getCanvas();
+        // The script to handle drawing voxels and receiving messages
+        const jsPath = path.join(this._extContext.extensionPath, 'src', 'web', 'index.js');
+
+        // Get path to resource on disk
+        const jsFile = vscode.Uri.file(jsPath);
+
+        // And get the special URI to use with the webview
+        const jsSrc = jsFile.with({ scheme: 'vscode-resource' });
 
         return `
         <!DOCTYPE html>
@@ -60,20 +82,15 @@ export class VoxelEditor {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Voxel Editor</title>
+            <title>${this._webView.title}</title>
         </head>
         <body>
-            <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
-            ${html}
-            <script src="index.js"></script>
+            <script src="https://threejs.org/build/three.js"></script>
+            <script src=${jsSrc}></script>
+            <script>
+            </script>
         </body>
         </html>`;
-    }
-
-    private _getCanvas() : string
-    {
-        // TODO: Do we want to add some control here?
-        return `<canvas id='canvas' width='100%'></canvas>`;
     }
 
     dispose() {
@@ -95,6 +112,7 @@ interface Voxel {
     rgb : string;
     a : number;
     pos : Position;
+    size : number;
 }
 
 interface Component {

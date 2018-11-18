@@ -12,20 +12,31 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "voxel-editor" is now active!');
 
+    let voxelEditor : VoxelEditor = new VoxelEditor(context);
+
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
     let disposable = vscode.commands.registerCommand('voxelEditor.renderVoxel', () => {
         // The code you place here will be executed every time your command is executed
-
+        
         // Display a message box to the user
         vscode.window.showInformationMessage('Rendering voxel file...');
 
-        const panel = vscode.window.createWebviewPanel('voxelEditor', "Voxel Editor", vscode.ViewColumn.One, {
+        let display : object = {
+            'command': 'display',
+            'text': 'Test!'
+        };
+        voxelEditor.postMessage(display);
 
-        });
+        let echo : object = {
+            'command': 'echo'
+        };
+        voxelEditor.postMessage(echo);
+    
     });
 
+    context.subscriptions.push(voxelEditor);
     context.subscriptions.push(disposable);
 }
 

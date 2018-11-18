@@ -1,26 +1,21 @@
 {
-    "scene": "City Scene",
-    "size: {
-        "x": 100,
-        "y": 100,
-        "z": 100
-    },
-    "components": [
-        {
-            {
-                "name": "building",
-                "voxels": [
-                    {
-                        "rgb": "32CD32",
-                        "a": "0.9",
-                        "pos": {
-                            "x": 5,
-                            "y": 6,
-                            "z": 9
-                        }
-                    }
-                ]
-            }
-        }
-    ]
+	"scene": "City Scene",
+	"size": {
+		"x": 100,
+		"y": 100,
+		"z": 100
+	},
+	"components": [{
+		"name": "building",
+		"voxels": [{
+			"rgb": "32CD32",
+			"a": 0.9,
+            "size": 1,
+			"pos": {
+				"x": 5,
+				"y": 6,
+				"z": 9
+			}
+		}]
+	}]
 }

@@ -1,7 +1,7 @@
 {
-    "name": "goal-setter",
-    "displayName": "Goal Setter",
-    "description": "Formats SMART goals",
+    "name": "voxel-editor",
+    "displayName": "Voxel Editor",
+    "description": "Create Voxel Art using Visual Studio Code!",
     "version": "0.0.1",
     "publisher": "mutantdino",
     "engines": {
@@ -11,14 +11,14 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "onCommand:voxelEditor.renderVoxel"
     ],
     "main": "./out/extension",
     "contributes": {
         "commands": [
             {
-                "command": "extension.sayHello",
-                "title": "Hello World"
+                "command": "voxelEditor.renderVoxel",
+                "title": "Render Voxel"
             }
         ]
     },

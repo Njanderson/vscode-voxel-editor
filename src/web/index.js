@@ -12,7 +12,7 @@
   //     1000
   //   );
 
-  //   var renderer = new THREE.WebGLRenderer();
+  // var renderer;
   //   renderer.setSize(window.innerWidth, window.innerHeight);
   //   document.body.appendChild(renderer.domElement);
 
@@ -30,7 +30,71 @@
   //   animate();
 
   //   camera.position.z = 5;
+  var camera, scene, renderer;
+  var plane, cube;
+  var mouse, raycaster, isShiftDown = false;
+  var rollOverMesh, rollOverMaterial;
+  var cubeGeo, cubeMaterial;
   var objects = [];
+
+  function onDocumentMouseMove( event ) {
+    event.preventDefault();
+    mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+    raycaster.setFromCamera( mouse, camera );
+    var intersects = raycaster.intersectObjects( objects );
+    if ( intersects.length > 0 ) {
+      var intersect = intersects[ 0 ];
+      rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
+      rollOverMesh.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+    }
+    render();
+  }
+
+  function onDocumentMouseDown(event) {
+    event.preventDefault();
+    mouse.set(
+      (event.clientX / window.innerWidth) * 2 - 1,
+      -(event.clientY / window.innerHeight) * 2 + 1
+    );
+    raycaster.setFromCamera(mouse, camera);
+    var intersects = raycaster.intersectObjects(objects);
+    if (intersects.length > 0) {
+      var intersect = intersects[0];
+      // delete cube
+      if (isShiftDown) {
+        if (intersect.object !== plane) {
+          scene.remove(intersect.object);
+          objects.splice(objects.indexOf(intersect.object), 1);
+        }
+        // create cube
+      } else {
+        var voxel = new THREE.Mesh(cubeGeo, cubeMaterial);
+        voxel.position.copy(intersect.point).add(intersect.face.normal);
+        voxel.position
+          .divideScalar(50)
+          .floor()
+          .multiplyScalar(50)
+          .addScalar(25);
+        scene.add(voxel);
+        objects.push(voxel);
+      }
+      render();
+    }
+  }
+
+  function onDocumentKeyDown( event ) {
+    switch ( event.keyCode ) {
+      case 16: isShiftDown = true; break;
+    }
+  }
+  function onDocumentKeyUp( event ) {
+    switch ( event.keyCode ) {
+      case 16: isShiftDown = false; break;
+    }
+  }
+  function render() {
+    renderer.render( scene, camera );
+  }
 
   function getScene() {
     // See: https://github.com/mrdoob/three.js/blob/master/examples/webgl_interactive_voxelpainter.html
@@ -58,7 +122,7 @@
 
     rollOverMesh.position = new THREE.Vector3();
     rollOverMesh.position.set(50, 100, 0);
-    
+
     scene.add(rollOverMesh);
 
     // cubes
@@ -70,11 +134,10 @@
       )
     });
 
-
     // grid
     var gridHelper = new THREE.GridHelper(1000, 20);
     scene.add(gridHelper);
-    
+
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
     var geometry = new THREE.PlaneBufferGeometry(1000, 1000);
@@ -94,13 +157,17 @@
     directionalLight.position.set(1, 0.75, 0.5).normalize();
     scene.add(directionalLight);
 
-    
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    renderer.render(scene, camera);
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    document.addEventListener( 'keydown', onDocumentKeyDown, false );
+    document.addEventListener( 'keyup', onDocumentKeyUp, false );
+
+    render();
   }
 
   getScene();

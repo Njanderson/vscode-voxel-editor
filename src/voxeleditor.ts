@@ -104,6 +104,7 @@ export class VoxelEditor {
         <body>
             <!-- External Libaries -->
             <script src="https://threejs.org/build/three.js"></script>
+            <script src="https://threejs.org/examples/js/controls/TrackballControls.js"></script>
             <!-- Internal Libaries -->
             <script src=${voxelEditorSrc}></script>
             <!-- Entry Point -->

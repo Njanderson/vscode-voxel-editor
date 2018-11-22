@@ -1,0 +1,2 @@
+- Make standalone libary for making easier message passing protocol - maybe integrating protobuf into the message passing?
+- 

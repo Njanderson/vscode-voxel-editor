@@ -32,20 +32,29 @@
   //   camera.position.z = 5;
   var camera, scene, renderer;
   var plane, cube;
-  var mouse, raycaster, isShiftDown = false;
+  var mouse,
+    raycaster,
+    isShiftDown = false;
   var rollOverMesh, rollOverMaterial;
   var cubeGeo, cubeMaterial;
   var objects = [];
 
-  function onDocumentMouseMove( event ) {
+  function onDocumentMouseMove(event) {
     event.preventDefault();
-    mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
-    raycaster.setFromCamera( mouse, camera );
-    var intersects = raycaster.intersectObjects( objects );
-    if ( intersects.length > 0 ) {
-      var intersect = intersects[ 0 ];
-      rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
-      rollOverMesh.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+    mouse.set(
+      (event.clientX / window.innerWidth) * 2 - 1,
+      -(event.clientY / window.innerHeight) * 2 + 1
+    );
+    raycaster.setFromCamera(mouse, camera);
+    var intersects = raycaster.intersectObjects(objects);
+    if (intersects.length > 0) {
+      var intersect = intersects[0];
+      rollOverMesh.position.copy(intersect.point).add(intersect.face.normal);
+      rollOverMesh.position
+        .divideScalar(50)
+        .floor()
+        .multiplyScalar(50)
+        .addScalar(25);
     }
     render();
   }
@@ -82,18 +91,24 @@
     }
   }
 
-  function onDocumentKeyDown( event ) {
-    switch ( event.keyCode ) {
-      case 16: isShiftDown = true; break;
+  function onDocumentKeyDown(event) {
+    switch (event.keyCode) {
+      case 16:
+        isShiftDown = true;
+        break;
     }
   }
-  function onDocumentKeyUp( event ) {
-    switch ( event.keyCode ) {
-      case 16: isShiftDown = false; break;
+
+  function onDocumentKeyUp(event) {
+    switch (event.keyCode) {
+      case 16:
+        isShiftDown = false;
+        break;
     }
   }
+
   function render() {
-    renderer.render( scene, camera );
+    renderer.render(scene, camera);
   }
 
   function getScene() {
@@ -144,7 +159,9 @@
     geometry.rotateX(-Math.PI / 2);
     plane = new THREE.Mesh(
       geometry,
-      new THREE.MeshBasicMaterial({ visible: false })
+      new THREE.MeshBasicMaterial({
+        visible: false
+      })
     );
 
     scene.add(plane);
@@ -157,15 +174,17 @@
     directionalLight.position.set(1, 0.75, 0.5).normalize();
     scene.add(directionalLight);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-    document.addEventListener( 'keydown', onDocumentKeyDown, false );
-    document.addEventListener( 'keyup', onDocumentKeyUp, false );
+    document.addEventListener("mousemove", onDocumentMouseMove, false);
+    document.addEventListener("mousedown", onDocumentMouseDown, false);
+    document.addEventListener("keydown", onDocumentKeyDown, false);
+    document.addEventListener("keyup", onDocumentKeyUp, false);
 
     render();
   }

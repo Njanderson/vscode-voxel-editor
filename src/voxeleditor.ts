@@ -51,21 +51,61 @@ export class VoxelEditor {
             return;
         }
 
-        let doc = editor.document;
+        // let doc = editor.document;
 
         // Only update status if a Voxel Markdown file
         // if (doc.languageId === "voxel-markdown") {}
-        let docContent = doc.getText();
+        // let docContent = doc.getText();
+
+
+        let docContent =
+        `
+        {
+            "scene": "City Scene",
+            "size": {
+                "x": 100,
+                "y": 100,
+                "z": 100
+            },
+            "components": [{
+                "name": "building",
+                "voxels": [{
+                    "rgb": "32CD32",
+                    "a": 0.9,
+                    "size": 1,
+                    "pos": {
+                        "x": 5,
+                        "y": 6,
+                        "z": 9
+                    }
+                }]
+            }]
+        }
+        `;
 
         // TODO: Add JSON schema validation
         // TODO: Parse this into a structured class
-        let voxelScene = JSON.parse(docContent);
-        this._webView.webview.html = this._createHtml(voxelScene);
+        let voxelScene : VoxelScene = JSON.parse(docContent);
+        this._webView.webview.html = this._createHtml(voxelScene.scene);
+
+        for (let componentIndex in voxelScene.components) {
+            let component = voxelScene.components[componentIndex];
+            
+            for (let voxelIndex in component.voxels) {
+                let voxel = component.voxels[voxelIndex];
+                let message : object = {
+                    'command': 'voxel',
+                    'voxel': JSON.stringify(voxel)
+                };
+                this.postMessage(message);
+            }
+        }
+        
     }
 
-    private _createHtml(voxelScene: VoxelScene): string {
-        this._webView.title = voxelScene.scene;
-        console.log("Creating html for " + voxelScene.scene);
+    private _createHtml(title: string): string {
+        this._webView.title = title;
+        console.log("Creating html for " + title);
 
         // The script to handle drawing voxels and receiving messages
         const jsPath = path.join(
@@ -97,11 +137,11 @@ export class VoxelEditor {
         <!DOCTYPE html>
         <html lang="en">
         <head>
-            <meta charset="UTF-8">E
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta charset="UTF-8">
             <title>${this._webView.title}</title>
         </head>
-        <body>
+        <!-- Default padding offsets -->
+        <body style="padding:0px;overflow:hidden;">
             <!-- External Libaries -->
             <script src="https://threejs.org/build/three.js"></script>
             <script src="https://threejs.org/examples/js/controls/TrackballControls.js"></script>
@@ -109,6 +149,7 @@ export class VoxelEditor {
             <script src=${voxelEditorSrc}></script>
             <!-- Entry Point -->
             <script src=${jsSrc}></script>
+            
         </body>
         </html>`;
     }

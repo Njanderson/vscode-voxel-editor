@@ -1,5 +1,7 @@
 class VoxelEditor {
-    constructor(voxelSize = 50) {
+    constructor(parent, voxelSize = 50) {
+        this._parent = parent;
+        console.log(this._parent);
         this._voxelSize = voxelSize;
         this._renderer = this._GetRenderer();
         this._camera = this._GetCamera();
@@ -26,22 +28,42 @@ class VoxelEditor {
         this._rollOverMesh = this._GetRolloverMesh();
         this._scene.add(this._rollOverMesh);
 
-        this._voxels = [];
+        // Intersection plane
+        this._plane = this._GetIntersectionPlane();
 
-        this._Animate(this);
+        // Pointer
+        var sphereGeometry = new THREE.SphereBufferGeometry(5, 32, 32);
+        var sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        this._pointer = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        this._scene.add(this._pointer);
+
+        this._voxels = [];
     }
 
     get VoxelSize() {
         return this._voxelSize;
     }
 
-    RenderScene(parent) {
-        parent.appendChild(this._renderer.domElement);
-        parent.addEventListener(
+    RenderScene() {
+        this._parent.appendChild(this._renderer.domElement);
+        this._parent.addEventListener(
             "mousemove",
             event => this._OnDocumentMouseMove(event),
             false
         );
+        window.addEventListener('resize', event => this._OnWindowResize(event), false);
+        this._Animate(this);
+    }
+
+    _GetIntersectionPlane() {
+        var geometry = new THREE.PlaneBufferGeometry(1000, 1000);
+        geometry.rotateX(- Math.PI / 2);
+        let plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ visible: false }));
+        return plane;
+    }
+
+    _GetCurrentMesh() {
+        // TODO:
     }
 
     _GetRolloverMesh() {
@@ -84,7 +106,6 @@ class VoxelEditor {
             1,
             10000
         );
-
         camera.position.set(500, 800, 1300);
         camera.lookAt(0, 0, 0);
         return camera;
@@ -110,14 +131,17 @@ class VoxelEditor {
         raycaster.setFromCamera(mouse, this._camera);
 
         let voxelIntersects = raycaster.intersectObjects(this._voxels);
-        let gridIntersects = raycaster.intersectObjects([this._grid]);
+        let planeIntersects = raycaster.intersectObject(this._plane);
 
-        let intersects = voxelIntersects.concat(gridIntersects);
+        let intersects = voxelIntersects.concat(planeIntersects);
 
         // If there is an intersection, place a block
         // on top of the intersected element
         if (intersects.length > 0) {
             let intersect = intersects[0];
+
+            // If pointer enabled, show where the intersection was found
+            this._pointer.position.copy(intersect.point);
 
             // Bump out point by the face normal;
             // this will leave the mesh pushed too far
@@ -125,12 +149,46 @@ class VoxelEditor {
                 .copy(intersect.point)
                 .add(intersect.face.normal);
 
+
             // Round to the nearest half of a voxel cube size
             this._rollOverMesh.position
-                .divideScalar(voxelSize)
+                .divideScalar(this._voxelSize)
                 .floor()
-                .multiplyScalar(voxelSize)
-                .addScalar(voxelSize / 2);
+                .multiplyScalar(this._voxelSize)
+                .addScalar(this._voxelSize / 2);
+        }
+    }
+
+    _OnDocumentMouseDown(event) {
+        event.preventDefault();
+
+        let mouse = new THREE.Vector2();
+        mouse.set((event.clientX / window.innerWidth) * 2 - 1,
+            - (event.clientY / window.innerHeight) * 2 + 1);
+        
+        raycaster.setFromCamera(mouse, this._camera);
+        let voxelIntersects = raycaster.intersectObjects(this._voxels);
+        let planeIntersects = raycaster.intersectObject(this._plane);
+
+        if (intersects.length > 0) {
+            var intersect = intersects[0];
+
+            // delete cube
+            if (isShiftDown) {
+                if (intersect.object !== plane) {
+                    scene.remove(intersect.object);
+                    objects.splice(objects.indexOf(intersect.object), 1);
+                }
+                // create cube
+            } else {
+                var voxel = new THREE.Mesh(cubeGeo, cubeMaterial);
+                voxel.position.copy(intersect.point).add(intersect.face.normal);
+                voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+                scene.add(voxel);
+                objects.push(voxel);
+            }
+
+            render();
         }
     }
 
@@ -151,6 +209,12 @@ class VoxelEditor {
 
     }
 
+    _OnWindowResize() {
+        this._camera.aspect = window.innerWidth / window.innerHeight;
+        this._camera.updateProjectionMatrix();
+        this._renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
     _RenderInternal() {
         this._renderer.render(this._scene, this._camera);
         this._controls.update();
@@ -160,5 +224,9 @@ class VoxelEditor {
         // Create closure to hold reference to toAnimate
         requestAnimationFrame(() => this._Animate(toAnimate));
         toAnimate._RenderInternal();
+    }
+
+    AddVoxel(voxel) {
+        console.log(voxel);
     }
 }
